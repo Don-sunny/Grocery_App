@@ -1,4 +1,5 @@
 import 'package:book_library_app_ui/data/categories.dart';
+import 'package:book_library_app_ui/models/category.dart';
 import 'package:flutter/material.dart';
 
 class NewItem extends StatefulWidget {
@@ -12,9 +13,17 @@ class NewItem extends StatefulWidget {
 
 class _NewItemState extends State<NewItem> {
   final _formKey = GlobalKey<FormState>();
+  var _enteredName = '';
+  var _enteredQuantity = 1;
+  var _selectedCategory = categories[Categories.vegetables]!;
 
   void _saveItem() {
-    _formKey.currentState!.validate();
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      print(_enteredName);
+      print(_enteredQuantity);
+      print(_selectedCategory.title);
+    }
   }
 
   @override
@@ -45,6 +54,9 @@ class _NewItemState extends State<NewItem> {
                   }
                   return null;
                 },
+                onSaved: (newValue) {
+                  _enteredName = newValue!;
+                },
               ),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -63,8 +75,9 @@ class _NewItemState extends State<NewItem> {
                         }
                         return null;
                       },
+                      onSaved: (newValue) {},
                       keyboardType: TextInputType.number,
-                      initialValue: '1',
+                      initialValue: _enteredQuantity.toString(),
                     ),
                   ),
                   const SizedBox(
@@ -72,6 +85,7 @@ class _NewItemState extends State<NewItem> {
                   ),
                   Expanded(
                     child: DropdownButtonFormField(
+                      value: _selectedCategory,
                       items: [
                         for (final category in categories
                             .entries) //we can use enteries into iterable.
@@ -85,7 +99,7 @@ class _NewItemState extends State<NewItem> {
                                   color: category.value.color,
                                 ),
                                 const SizedBox(
-                                  width: 90,
+                                  width: 6,
                                 ),
                                 Text(
                                   category.value.title,
@@ -94,7 +108,11 @@ class _NewItemState extends State<NewItem> {
                             ),
                           ),
                       ],
-                      onChanged: (value) {},
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedCategory = value!;
+                        });
+                      },
                     ),
                     // using map insetead of for in
 // DropdownButtonFormField<Category>(
