@@ -1,5 +1,7 @@
 import 'package:book_library_app_ui/data/categories.dart';
+import 'package:book_library_app_ui/data/dummy_items.dart';
 import 'package:book_library_app_ui/models/category.dart';
+import 'package:book_library_app_ui/models/grocery_items.dart';
 import 'package:flutter/material.dart';
 
 class NewItem extends StatefulWidget {
@@ -20,6 +22,13 @@ class _NewItemState extends State<NewItem> {
   void _saveItem() {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
+      Navigator.of(context).pop(
+        GroceryItem(
+            id: DateTime.now().toString(),
+            name: _enteredName,
+            quantity: _enteredQuantity,
+            category: _selectedCategory),
+      );
       print(_enteredName);
       print(_enteredQuantity);
       print(_selectedCategory.title);

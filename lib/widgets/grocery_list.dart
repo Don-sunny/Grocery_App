@@ -1,4 +1,4 @@
-import 'package:book_library_app_ui/data/dummy_items.dart';
+import 'package:book_library_app_ui/models/grocery_items.dart';
 import 'package:book_library_app_ui/widgets/new_item.dart';
 import 'package:flutter/material.dart';
 
@@ -10,42 +10,68 @@ class GroceryList extends StatefulWidget {
 }
 
 class _GroceryListState extends State<GroceryList> {
-  void _addItem() {
-    Navigator.of(context).push(
+  final List<GroceryItem> _groceryItems = [];
+
+  void _addItem() async {
+    final newItem = await Navigator.of(context).push<GroceryItem>(
       MaterialPageRoute(
         builder: (context) => const NewItem(),
       ),
     );
+    if (newItem == null) {
+      return;
+    }
+    setState(() {
+      _groceryItems.add(newItem);
+    });
+  }
+
+  void _removeItem(GroceryItem item) {
+    setState(() {
+      _groceryItems.remove(item);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Your Groceries'),
-        actions: [
-          IconButton(
-            onPressed: _addItem,
-            icon: const Icon(Icons.add),
-          )
-        ],
-      ),
-      body: ListView.builder(
-        itemCount: groceryItems.length,
-        itemBuilder: (ctx, index) => ListTile(
-          title: Text(
-            groceryItems[index].name,
+    Widget content = const Center(
+      child: Text('No Items added yet'),
+    );
+
+    if (_groceryItems.isNotEmpty) {
+      content = ListView.builder(
+        itemCount: _groceryItems.length,
+        itemBuilder: (ctx, index) => Dismissible(
+          key: ValueKey(_groceryItems[index].id),
+          onDismissed: (direction) => _removeItem(
+            _groceryItems[index],
           ),
-          leading: Container(
-            width: 24,
-            height: 24,
-            color: groceryItems[index].category.color,
-          ),
-          trailing: Text(
-            groceryItems[index].quantity.toString(),
+          child: ListTile(
+            title: Text(
+              _groceryItems[index].name,
+            ),
+            leading: Container(
+              width: 24,
+              height: 24,
+              color: _groceryItems[index].category.color,
+            ),
+            trailing: Text(
+              _groceryItems[index].quantity.toString(),
+            ),
           ),
         ),
-      ),
-    );
+      );
+    }
+    return Scaffold(
+        appBar: AppBar(
+          title: const Text('Your Groceries'),
+          actions: [
+            IconButton(
+              onPressed: _addItem,
+              icon: const Icon(Icons.add),
+            )
+          ],
+        ),
+        body: content);
   }
 }
