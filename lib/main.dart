@@ -14,12 +14,15 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Flutter Groceries',
       theme: ThemeData.dark().copyWith(
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color.fromARGB(255, 74, 78, 82),
+        ),
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color.fromARGB(255, 147, 229, 250),
           brightness: Brightness.dark,
-          surface: const Color.fromARGB(255, 147, 229, 250),
+          surface: const Color.fromARGB(255, 10, 10, 10),
         ),
-        scaffoldBackgroundColor: const Color.fromARGB(255, 50, 58, 60),
+        // scaffoldBackgroundColor: const Color.fromARGB(255, 50, 58, 60),
       ),
       home: const GroceryList(),
     );
