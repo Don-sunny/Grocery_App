@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:book_library_app_ui/data/categories.dart';
-import 'package:book_library_app_ui/data/dummy_items.dart';
 import 'package:book_library_app_ui/models/category.dart';
-import 'package:book_library_app_ui/models/grocery_items.dart';
+// import 'package:book_library_app_ui/models/grocery_items.dart';
 import 'package:flutter/material.dart';
+
+import 'package:http/http.dart' as http;
 
 class NewItem extends StatefulWidget {
   const NewItem({super.key});
@@ -16,23 +19,55 @@ class NewItem extends StatefulWidget {
 class _NewItemState extends State<NewItem> {
   final _formKey = GlobalKey<FormState>();
   var _enteredName = '';
-  var _enteredQuantity = 1;
+  var enteredQuantity = 1;
   var _selectedCategory = categories[Categories.vegetables]!;
 
-  void _saveItem() {
+  void _saveItem() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-      Navigator.of(context).pop(
-        GroceryItem(
-            id: DateTime.now().toString(),
-            name: _enteredName,
-            quantity: _enteredQuantity,
-            category: _selectedCategory),
+      // try {
+      final url = Uri.https(
+        'flutter-rep-42cb7-default-rtdb.firebaseio.com',
+        '/shopping-list.json',
       );
-      print(_enteredName);
-      print(_enteredQuantity);
-      print(_selectedCategory.title);
+
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(
+          {
+            'name': _enteredName,
+            'quantity': enteredQuantity,
+            'category': _selectedCategory.title,
+          },
+        ),
+      );
+      if (!context.mounted) {
+        return;
+      }
+      Navigator.of(context).pop();
+
+      // if (response.statusCode == 200) {
+      //   print('Item saved successfully');
+      // } else {
+      //   print('Failed to save item : ${response.statusCode}');
+      // }
+      // } catch (e) {
+      //   print('EXception occurred during save :$e');
+      // }
+
+      // Navigator.of(context).pop();
+
+      // Navigator.of(context).pop(
+      //   GroceryItem(
+      //     id: DateTime.now().toString(),
+      //     name: _enteredName,
+      //     quantity: enteredQuantity,
+      //     category: _selectedCategory,
+      //   ),
+      // );
     }
+    ;
   }
 
   @override
@@ -86,7 +121,7 @@ class _NewItemState extends State<NewItem> {
                       },
                       onSaved: (newValue) {},
                       keyboardType: TextInputType.number,
-                      initialValue: _enteredQuantity.toString(),
+                      initialValue: enteredQuantity.toString(),
                     ),
                   ),
                   const SizedBox(
