@@ -16,6 +16,8 @@ class GroceryList extends StatefulWidget {
 
 class _GroceryListState extends State<GroceryList> {
   List<GroceryItem> _groceryItems = [];
+  var isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -28,40 +30,107 @@ class _GroceryListState extends State<GroceryList> {
       'flutter-rep-42cb7-default-rtdb.firebaseio.com',
       '/shopping-list.json',
     );
-    final respones = await http.get(url);
 
-    final Map<String, dynamic> listDate = json.decode(respones.body);
-    final List<GroceryItem> loadItems = [];
-    for (final item in listDate.entries) {
-      final category = categories.entries
-          .firstWhere(
-              (catItem) => catItem.value.title == item.value['category'])
-          .value;
-      loadItems.add(GroceryItem(
-        id: item.key,
-        name: item.value['name'],
-        quantity: item.value['quantity'],
-        category: category,
-      ));
+    try {
+      final respones = await http.get(url);
+
+      if (respones.body == 'null') {
+        // Fire base return a string null.
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
+
+      final Map<String, dynamic> listDate = json.decode(respones.body);
+      final List<GroceryItem> loadItems = [];
+      for (final item in listDate.entries) {
+        final category = categories.entries
+            .firstWhere(
+                (catItem) => catItem.value.title == item.value['category'])
+            .value;
+        loadItems.add(GroceryItem(
+          id: item.key,
+          name: item.value['name'],
+          quantity: item.value['quantity'],
+          category: category,
+        ));
+      }
+      setState(() {
+        _groceryItems = loadItems;
+        isLoading = false;
+      });
+    } catch (err) {
+      setState(() {
+        _error = 'Somthing went wrong. please try again later';
+      });
     }
-    setState(() {
-      _groceryItems = loadItems;
-    });
+
+    // if (respones.statusCode >= 404) {
+    //   setState(() {
+    //     _error = 'Failed to fetch data. please try again later';
+    //   });
+    // }
+
+    // if (respones.body == 'null') {
+    //   // Fire base return a string null.
+    //   setState(() {
+    //     isLoading = false;
+    //   });
+    //   return;
+    // }
+
+    // final Map<String, dynamic> listDate = json.decode(respones.body);
+    // final List<GroceryItem> loadItems = [];
+    // for (final item in listDate.entries) {
+    //   final category = categories.entries
+    //       .firstWhere(
+    //           (catItem) => catItem.value.title == item.value['category'])
+    //       .value;
+    //   loadItems.add(GroceryItem(
+    //     id: item.key,
+    //     name: item.value['name'],
+    //     quantity: item.value['quantity'],
+    //     category: category,
+    //   ));
+    // }
+    // setState(() {
+    //   _groceryItems = loadItems;
+    //   isLoading = false;
+    // });
   }
 
   void _addItem() async {
-    await Navigator.of(context).push<GroceryItem>(
+    final newItem = await Navigator.of(context).push<GroceryItem>(
       MaterialPageRoute(
         builder: (context) => const NewItem(),
       ),
     );
-    _loadItems();
+    if (newItem == null) {
+      return;
+    }
+    setState(() {
+      _groceryItems.add(newItem);
+    });
+    // _loadItems();
   }
 
-  void _removeItem(GroceryItem item) {
+  void _removeItem(GroceryItem item) async {
+    final index = _groceryItems.indexOf(item);
     setState(() {
       _groceryItems.remove(item);
     });
+    final url = Uri.https(
+      'rep-42cb7-default-rtdb.firebaseio.com',
+      '/shopping-list/${item.id}.json',
+    );
+    final response = await http.delete(url);
+    // Optional: Show error massage
+    if (response.statusCode >= 400) {
+      setState(() {
+        _groceryItems.insert(index, item);
+      });
+    }
   }
 
   @override
@@ -69,6 +138,12 @@ class _GroceryListState extends State<GroceryList> {
     Widget content = const Center(
       child: Text('No Items added yet'),
     );
+
+    if (isLoading) {
+      content = const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
 
     if (_groceryItems.isNotEmpty) {
       content = ListView.builder(
@@ -91,6 +166,15 @@ class _GroceryListState extends State<GroceryList> {
               _groceryItems[index].quantity.toString(),
             ),
           ),
+        ),
+      );
+    }
+
+    if (_error != null) {
+      content = Center(
+        child: Text(
+          _error!,
+          style: const TextStyle(fontSize: 25),
         ),
       );
     }

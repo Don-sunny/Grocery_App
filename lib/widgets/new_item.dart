@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:book_library_app_ui/data/categories.dart';
 import 'package:book_library_app_ui/models/category.dart';
+import 'package:book_library_app_ui/models/grocery_items.dart';
 // import 'package:book_library_app_ui/models/grocery_items.dart';
 import 'package:flutter/material.dart';
 
@@ -21,10 +22,14 @@ class _NewItemState extends State<NewItem> {
   var _enteredName = '';
   var enteredQuantity = 1;
   var _selectedCategory = categories[Categories.vegetables]!;
+  var _isSending = false;
 
   void _saveItem() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
+      setState(() {
+        _isSending = true;
+      });
       // try {
       final url = Uri.https(
         'flutter-rep-42cb7-default-rtdb.firebaseio.com',
@@ -42,10 +47,15 @@ class _NewItemState extends State<NewItem> {
           },
         ),
       );
+      final Map<String, dynamic> resData = json.decode(response.body);
       if (!context.mounted) {
         return;
       }
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(GroceryItem(
+          id: resData['name'],
+          name: _enteredName,
+          quantity: enteredQuantity,
+          category: _selectedCategory));
 
       // if (response.statusCode == 200) {
       //   print('Item saved successfully');
@@ -191,17 +201,25 @@ class _NewItemState extends State<NewItem> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: () {
-                      _formKey.currentState!.reset();
-                    },
+                    onPressed: _isSending
+                        ? null
+                        : () {
+                            _formKey.currentState!.reset();
+                          },
                     child: const Text('Rest'),
                   ),
                   ElevatedButton(
-                    onPressed: _saveItem,
-                    child: const Text(
-                      'Add Item',
-                      style: TextStyle(),
-                    ),
+                    onPressed: _isSending ? null : _saveItem,
+                    child: _isSending
+                        ? const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(),
+                          )
+                        : const Text(
+                            'Add Item',
+                            style: TextStyle(),
+                          ),
                   )
                 ],
               )
